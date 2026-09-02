@@ -1,11 +1,26 @@
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import { db } from "../lib/db";
+import { getSession } from "../lib/session";
+import { redirect } from "next/navigation";
 
-export default function AgentDashboard() {
+export default async function AgentDashboard() {
+  // 1. Get the securely decoded session
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  // 2. Fetch the live user data from the database
+  const user = await db.user.findUnique({
+    where: { id: session.userId },
+    select: { walletBalance: true, phone: true }
+  });
+
+  if (!user) redirect("/login");
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back</h1>
-        <p className="text-slate-500 mt-2">Ready to book some flights today?</p>
+        <p className="text-slate-500 mt-2">Agent ID: {user.phone}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -14,16 +29,18 @@ export default function AgentDashboard() {
             <CardTitle className="text-sm font-medium text-slate-500">Available Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">₹0</div>
-            <p className="text-xs text-slate-500 mt-1">Contact Super Admin to recharge</p>
+            {/* Convert the Decimal object to a string for React */}
+            <div className="text-3xl font-bold text-slate-900">₹{user.walletBalance.toString()}</div>
+            <p className="text-xs text-slate-500 mt-1">Ready for bookings</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Tickets Booked (This Month)</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500">Tickets Booked</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* We will make this dynamic when we build the booking engine */}
             <div className="text-3xl font-bold text-slate-900">0</div>
           </CardContent>
         </Card>
