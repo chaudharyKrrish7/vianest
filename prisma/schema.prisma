@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  STATE_ADMIN
+  AGENT
+}
+
+enum AgentStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id             String              @id @default(cuid())
+  role           Role                @default(AGENT)
+  operatingState String?
+  
+  phone          String              @unique
+  agencyName     String?
+  gstNumber      String?
+  status         AgentStatus         @default(PENDING_VERIFICATION)
+  
+  walletBalance  Decimal             @default(0.00) @db.Decimal(10, 2)
+  ledger         WalletTransaction[]
+  bookings       Booking[]
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model WalletTransaction {
+  id             String   @id @default(cuid())
+  agentId        String
+  type           String   // "CREDIT" or "DEBIT"
+  amount         Decimal  @db.Decimal(10, 2)
+  runningBalance Decimal  @db.Decimal(10, 2) 
+  referenceId    String?  // PNR or Payment Gateway ID
+  description    String
+  
+  createdAt      DateTime @default(now())
+  agent          User     @relation(fields: [agentId], references: [id])
+}
+
+model Booking {
+  id             String   @id 
+  tripjackPnr    String?  @unique
+  agentId        String
+  category       String   @default("FLIGHT") 
+  status         String   
+  
+  netAmount      Decimal  @db.Decimal(10, 2) 
+  agentMarkup    Decimal  @db.Decimal(10, 2) 
+  grossAmount    Decimal  @db.Decimal(10, 2) 
+  
+  travelDate     DateTime
+  apiLog         Json?    
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  agent          User     @relation(fields: [agentId], references: [id])
+  passengers     Passenger[]
+}
+
+model Passenger {
+  id             String   @id @default(cuid())
+  bookingId      String
+  firstName      String
+  lastName       String
+  type           String   // ADULT, CHILD, INFANT
+  
+  booking        Booking  @relation(fields: [bookingId], references: [id])
+}
