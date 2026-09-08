@@ -1,41 +1,65 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../lib/db";
+import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
     const { phone } = await req.json();
 
-    if (!phone || phone.length !== 10) {
-      return NextResponse.json({ error: "Invalid phone number format" }, { status: 400 });
+    if (!phone || phone.length < 10) {
+      return NextResponse.json({ error: "Invalid phone number" }, { status: 400 });
     }
 
-    // Check if user exists in database, or create them as a PENDING AGENT
-    let user = await db.user.findUnique({
+    // 1. Generate a real, random 6-digit OTP
+    const generatedOtp = crypto.randomInt(100000, 999999).toString();
+    
+    // 2. Set expiration time to 5 minutes from now
+    const expiryTime = new Date(Date.now() + 5 * 60 * 1000); 
+
+    // 3. Upsert the user in the database with the new OTP
+    await db.user.upsert({
       where: { phone },
+      update: {
+        otp: generatedOtp,
+        otpExpiry: expiryTime,
+      },
+      create: {
+        phone,
+        otp: generatedOtp,
+        otpExpiry: expiryTime,
+      }
     });
 
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          phone,
-          status: "PENDING_VERIFICATION",
-          role: "AGENT",
+    if (process.env.FAST2SMS_API_KEY) {
+      const smsResponse = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+        method: "POST",
+        headers: {
+          "authorization": process.env.FAST2SMS_API_KEY,
+          "Content-Type": "application/json"
         },
+        body: JSON.stringify({
+          route: "otp",
+          variables_values: generatedOtp,
+          numbers: phone,
+        })
       });
+
+      const smsData = await smsResponse.json();
+      
+      if (!smsData.return) {
+        console.error("Fast2SMS API Error:", smsData);
+        // Fallback to console if the API fails (e.g., out of credits)
+        console.log(`[FALLBACK MOCK] OTP: ${generatedOtp} for ${phone}`);
+      }
+    } else {
+      // If you haven't set the .env key yet, just log it
+      console.log(`[SMS MOCK] OTP: ${generatedOtp} for ${phone}`);
     }
 
-    // Generate a mock 6-digit OTP for development
-    const mockOtp = "123456";
-    console.log(`[DEV-OTP] Code for ${phone}: ${mockOtp}`);
+    return NextResponse.json({ success: true, message: "OTP sent successfully" });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "OTP sent successfully",
-      // Sending back in response for easy local testing
-      developmentOtp: mockOtp 
-    });
   } catch (error) {
-    console.error("OTP Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Failed to send OTP:", error);
+    return NextResponse.json({ error: "Failed to send OTP" }, { status: 500 });
   }
 }

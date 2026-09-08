@@ -25,8 +25,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <a href="/admin/agents" className="block px-4 py-2 rounded-md hover:bg-slate-800 hover:text-white transition-colors">
             Manage Agents
           </a>
-          <a href="/admin/ledger" className="block px-4 py-2 rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            Global Ledger
+          <a href="/admin/ledger" className="block px-4 py-2 rounded-md hover:bg-slate-800 transition-colors">
+          Global Ledger
+          </a>
+          <a href="/admin/settings" className="block px-4 py-2 rounded-md hover:bg-slate-800 transition-colors">
+          Platform Settings
           </a>
         </nav>
         <div className="p-4 border-t border-slate-800">

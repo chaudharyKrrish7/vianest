@@ -1,40 +1,44 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { SignJWT } from "jose";
 import { db } from "../../../lib/db";
+import { SignJWT } from "jose";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
     const { phone, otp } = await req.json();
 
-    // 1. Verify the OTP (Using our dev mock code "123456")
-    if (otp !== "123456") {
+    // 1. Find the user and their saved OTP
+    const user = await db.user.findUnique({ where: { phone } });
+
+    if (!user || !user.otp || !user.otpExpiry) {
+      return NextResponse.json({ error: "No OTP requested for this number" }, { status: 400 });
+    }
+
+    // 2. Check if the OTP is correct
+    if (user.otp !== otp) {
       return NextResponse.json({ error: "Invalid OTP" }, { status: 401 });
     }
 
-    // 2. Fetch the user from the database
-    const user = await db.user.findUnique({
-      where: { phone },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // 3. Check if the OTP has expired
+    if (new Date() > user.otpExpiry) {
+      return NextResponse.json({ error: "OTP has expired. Please request a new one." }, { status: 401 });
     }
 
-    // 3. Create a secure JWT token
+    // 4. Clear the OTP from the database so it can't be reused
+    await db.user.update({
+      where: { id: user.id },
+      data: { otp: null, otpExpiry: null }
+    });
+
+    // 5. Generate the Session JWT (Your existing logic)
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({ 
-      userId: user.id, 
-      role: user.role, 
-      status: user.status 
-    })
+    const token = await new SignJWT({ userId: user.id, role: user.role, status: user.status })
       .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("24h") // Session lasts 24 hours
+      .setExpirationTime("24h")
       .sign(secret);
 
-    // 4. Set the HTTP-Only cookie
-    (await cookies()).set("vianest_session", token, {
+    const cookieStore = await cookies();
+    cookieStore.set("vianest_session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -42,9 +46,10 @@ export async function POST(req: Request) {
       path: "/",
     });
 
-    return NextResponse.json({ success: true, message: "Logged in successfully", role: user.role });
+    return NextResponse.json({ success: true });
+
   } catch (error) {
-    console.error("Verification Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Verification failed:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

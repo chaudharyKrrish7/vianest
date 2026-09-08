@@ -28,7 +28,12 @@ model User {
   phone          String              @unique
   agencyName     String?
   gstNumber      String?
+  email          String?
+  address        String?
   status         AgentStatus         @default(PENDING_VERIFICATION)
+  
+  otp            String?
+  otpExpiry      DateTime?
   
   walletBalance  Decimal             @default(0.00) @db.Decimal(10, 2)
   ledger         WalletTransaction[]
@@ -80,4 +85,10 @@ model Passenger {
   type           String   // ADULT, CHILD, INFANT
   
   booking        Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model PlatformSettings {
+  id           String   @id @default("global")
+  flightMarkup Decimal  @default(300.00) @db.Decimal(10, 2)
+  updatedAt    DateTime @updatedAt
 }

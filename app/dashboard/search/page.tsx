@@ -91,9 +91,12 @@ export default function FlightSearchPage() {
                 <div className="text-2xl font-bold text-slate-900">₹{flight.markupPrice}</div>
                 <div className="text-xs text-green-600 font-medium">B2B Agent Net Fare</div>
               </div>
-              <Button className="bg-slate-900 hover:bg-slate-800 text-white">
+              <a 
+                href={`/dashboard/book?flightNo=${flight.flightNo}&airline=${flight.airline}&origin=${flight.origin}&destination=${flight.destination}&price=${flight.markupPrice}`}
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-slate-900 hover:bg-slate-800 text-white h-10 px-4 py-2"
+              >
                 Book Now
-              </Button>
+              </a>
             </div>
           </Card>
         ))}
