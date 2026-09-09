@@ -23,7 +23,7 @@ export async function processBooking(formData: FormData) {
 
   if (!validatedData.success) {
     // If someone messed with the form, we throw an error with the exact reason
-    throw new Error(validatedData.error.errors[0].message);
+    throw new Error(validatedData.error.issues[0].message);
   }
 
   const { flightNo, price, firstName, lastName } = validatedData.data;
