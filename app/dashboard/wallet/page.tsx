@@ -8,8 +8,7 @@ export default async function WalletPage() {
 
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    // Removed 'firstName' from here
-    select: { walletBalance: true } 
+    select: { walletBalance: true, agencyName: true } 
   });
 
   return (
@@ -41,7 +40,7 @@ export default async function WalletPage() {
               <div className="relative z-10 mt-12">
                 <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">Agent Profile</p>
                 <p className="text-white font-semibold tracking-wide">
-                  {user?.firstName?.toUpperCase() || "VIANEST AGENT"}
+                  {user?.agencyName?.toUpperCase() || "VIANEST AGENT"}
                 </p>
               </div>
             </div>
