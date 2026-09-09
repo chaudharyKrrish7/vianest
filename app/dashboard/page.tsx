@@ -41,13 +41,19 @@ export default async function DashboardPage({
       <div className="w-full max-w-5xl px-4 animate-[fadeIn_0.8s_ease-out_forwards] z-10">
         <div className="bg-white/80 backdrop-blur-xl border border-zinc-200/60 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
           
+          {/* Tabs */}
           <div className="flex border-b border-zinc-100">
             <button className="flex-1 py-4 text-sm font-bold text-zinc-900 border-b-2 border-zinc-900 bg-white">
               ✈ Search Flights
             </button>
-            <button className="flex-1 py-4 text-sm font-semibold text-zinc-400 hover:text-zinc-600 transition-colors">
+            
+            {/* Now acts as a seamless link to the bookings dashboard */}
+            <Link 
+              href="/dashboard/bookings" 
+              className="flex-1 py-4 text-sm font-semibold text-zinc-400 hover:text-zinc-600 transition-colors text-center inline-block"
+            >
               Manage Booking
-            </button>
+            </Link>
           </div>
 
           {/* Form Action points to "/dashboard" to reload the same page with data */}

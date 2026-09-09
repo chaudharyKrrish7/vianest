@@ -3,14 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
-    "postinstall": "prisma skills sync || exit 0"
-  },
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "postinstall": "prisma generate"
+},
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@upstash/ratelimit": "^2.0.8",
