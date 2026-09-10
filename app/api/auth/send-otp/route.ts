@@ -10,8 +10,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid phone number" }, { status: 400 });
     }
 
-    // 1. Generate a real, random 6-digit OTP
-    const generatedOtp = crypto.randomInt(100000, 999999).toString();
+    // 1. TEMP FOR TESTING: Hardcoded OTP so you can log in from any device
+    // const generatedOtp = crypto.randomInt(100000, 999999).toString();
+    const generatedOtp = "123456"; 
     
     // 2. Set expiration time to 5 minutes from now
     const expiryTime = new Date(Date.now() + 5 * 60 * 1000); 
@@ -48,11 +49,9 @@ export async function POST(req: Request) {
       
       if (!smsData.return) {
         console.error("Fast2SMS API Error:", smsData);
-        // Fallback to console if the API fails (e.g., out of credits)
         console.log(`[FALLBACK MOCK] OTP: ${generatedOtp} for ${phone}`);
       }
     } else {
-      // If you haven't set the .env key yet, just log it
       console.log(`[SMS MOCK] OTP: ${generatedOtp} for ${phone}`);
     }
 
